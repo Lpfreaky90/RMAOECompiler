@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -35,31 +32,30 @@ namespace RMAOECompiler
 			{
 				int num = 0;
 				Int32.TryParse(args[0], out num);
-				if (num > 0 && (num & (num - 1)) == 0 && num < 5000)
+				if (num <= 0 || num > 4096 || (num & (num - 1)) != 0)
+				{
+					//just log some of the exceptions
+					if (num <= 0)
+					{
+						Console.WriteLine("Resolution needs to be bigger than 0.");
+					}
+					else if (num > 4096)
+					{
+						Console.WriteLine("Requested resolution is too high; this was written in 2017, 4k textures were pretty much the highest we could go!");
+					}
+					else if ((num & (num - 1)) != 0)
+					{
+						Console.WriteLine("Need to use a power of 2-resolution. This is much better for game engines.");
+					}
+				}
+				else
 				{
 					maxResolution = num;
 					Console.WriteLine(string.Format("Using requested resolution: {0}", num));
 				}
-				else
-				{
-					//just log some of the exceptions
-					if (num > 4096)
-					{
-						Console.WriteLine("Requested resolution is too high; this was written in 2017, 4k textures were pretty much the highest we could go!");
-					}
-
-					if ((num & (num - 1)) != 0)
-					{
-						Console.WriteLine("Need to use a power of 2-resolution. This is much better for game engines.");
-					}
-
-					if (num < 0)
-					{
-						Console.WriteLine("Resolution needs to be bigger than 0.");
-					}
-				}
 			}
 
+			//Create a directory to put used files into
 			if (!Directory.Exists("RMAOE"))
 			{
 				Directory.CreateDirectory("RMAOE");
@@ -67,23 +63,26 @@ namespace RMAOECompiler
 
 			List <string> allFiles = new List<string>();
 
+			//We gather all textures, we can have textures where we don't have certain values; those default to black.
 			foreach (ETextureType textureType in Enum.GetValues(typeof(ETextureType)))
 			{
 				allFiles = Index(textureType, allFiles);
 			}
 
+			//once we get the name of all the textures; actually compile them.
 			foreach (string fileName in allFiles)
 			{
 				CreateTexture(fileName);
 			}
 
+			//Keep the console open until ENTER has been pressed.
 			Console.WriteLine("");
 			Console.WriteLine("==============================================================");
 			Console.WriteLine("                    Press ENTER to exit...                    ");
 			Console.ReadLine();
 		}
 
-		public enum EFileExtension
+		public enum EPostFix
 		{
 			_R,
 			_M,
@@ -99,18 +98,20 @@ namespace RMAOECompiler
 			Emissive
 		}
 
+		//Gather the clean names of the textures
 		static string CleanName(string dirtyName)
 		{
-			//clean up names; like _M _R etc.
 			string cleanName = dirtyName.Replace(".png", "");
 			cleanName = cleanName.Replace("\\", "");
-			foreach (EFileExtension fe in Enum.GetValues(typeof(EFileExtension)))
+			//we replace all the different postfixes
+			foreach (EPostFix postFix in Enum.GetValues(typeof(EPostFix)))
 			{
-				cleanName = cleanName.Replace(fe.ToString(), "");
+				cleanName = cleanName.Replace(postFix.ToString(), "");
 			}
 			return cleanName;
 		}
 
+		//Create a list of all the different textures
 		static List<string> Index(ETextureType type, List<string> allFiles)
 		{
 			string typeName = type.ToString();
@@ -130,23 +131,23 @@ namespace RMAOECompiler
 					allFiles.Add(fn);
 				}
 			}
-
 			return allFiles;
 		}
 
+		//Create and save the texture
 		static void CreateTexture(string fileName)
 		{
 			Console.WriteLine(string.Format("Compiling texture: {0}",fileName));
 
-			string realFileName = null;
+			string filePath = null;
 			Bitmap[] image = new Bitmap[4];
 			Bitmap endResult = new Bitmap(maxResolution, maxResolution);
 			for (int i = 0; i < Enum.GetNames(typeof(ETextureType)).Length; i++)
 			{
-				realFileName = string.Format("{0}/{1}{2}.png", Enum.GetNames(typeof(ETextureType))[i], fileName, Enum.GetNames(typeof(EFileExtension))[i]);
-				if (File.Exists(realFileName))
+				filePath = string.Format("{0}/{1}{2}.png", Enum.GetNames(typeof(ETextureType))[i], fileName, Enum.GetNames(typeof(EPostFix))[i]);
+				if (File.Exists(filePath))
 				{
-					Bitmap thisBitmap = (Bitmap)Image.FromFile(realFileName);
+					Bitmap thisBitmap = (Bitmap)Image.FromFile(filePath);
 					if (thisBitmap.Height != maxResolution || thisBitmap.Width != maxResolution)
 					{
 						//Here we resize the images;
