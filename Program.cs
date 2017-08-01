@@ -24,6 +24,10 @@ namespace RMAOECompiler
 			{
 				return compileSettings.resolution;
 			}
+			set 
+			{
+				compileSettings.resolution = value;
+			}
 		}
 
 		public enum EPostFix
@@ -79,11 +83,12 @@ namespace RMAOECompiler
 			initialize();
 
 			//we set a default resolution; can be overwritten with a commandprompt
+			//this is legacy fallback; should now just use settings.json
 			if (args.Length != 0)
 			{
 				int num = 0;
 				Int32.TryParse(args[0], out num);
-				compileSettings.resolution = maxResolution;
+				compileSettings.resolution = num;
 			}
 
 			List <string> allFiles = new List<string>();
