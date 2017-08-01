@@ -1,0 +1,8 @@
+{
+	"invertAlpha": true,
+	"resolution": 2048,
+	"roughnessDefaultValue": 255,
+	"metallicityDefaultValue": 255,
+	"ambientOcclusionDefaultValue": 255,
+	"emissiveDefaultValue": 0
+}
