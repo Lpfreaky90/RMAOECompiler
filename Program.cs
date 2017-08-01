@@ -361,7 +361,7 @@ namespace RMAOECompiler
 			}
 			set
 			{
-				if (value <= 0 || value > 4096 || (value & (value - 1)) != 0)
+				if (value <= 0 || value > 8192 || (value & (value - 1)) != 0)
 				{
 					//just log some of the exceptions
 					if (value <= 0)
